@@ -62,9 +62,7 @@ public class TeleOP extends OpMode
     private DcMotor bottomLeft = null;
     private DcMotor topLeft = null;
     private DcMotor intake = null;
-
-    private double powerScale = 1;
-
+    
     private double leftY1;
     private double leftX1;
     private double rightX1;
@@ -92,35 +90,15 @@ public class TeleOP extends OpMode
     @Override
     public void loop() {
 
-        leftY1 = powerCurve(gamepad1.left_stick_y);
-        leftX1 = powerCurve(gamepad1.left_stick_x);
-        rightX1 = powerCurve(gamepad1.right_stick_x);
+        leftY1 = gamepad1.left_stick_y;
+        leftX1 = gamepad1.left_stick_x;
+        rightX1 = gamepad1.right_stick_x;
 
         //Movement
-        if (gamepad1.left_stick_y > 0) {
-            fwd();
-        } else if (gamepad1.left_stick_y < 0) {
-            bwd();
-        } else {
-            still();
-        }
-
-        if (gamepad1.left_stick_x > 0) {
-            right();
-        } else if (gamepad1.left_stick_x < 0) {
-            left();
-        } else {
-            still();
-        }
-
-        //Rotation
-        if (gamepad1.right_stick_x > 0) {
-            turnRight();
-        } else if (gamepad1.right_stick_x < 0) {
-            turnLeft();
-        } else {
-            still();
-        }
+        topRight.setPower(-leftY1 - leftX1 - rightX1);
+        bottomRight.setPower(-leftY1 + leftX1 - rightX1);
+        bottomLeft.setPower(leftY1 + leftX1 - rightX1);
+        topLeft.setPower(leftY1 - leftX1 - rightX1);
 
 //        //Intake
 //        if (gamepad1.right_trigger != 0) {
@@ -135,61 +113,4 @@ public class TeleOP extends OpMode
     @Override
     public void stop() {
     }
-
-    public void fwd() {
-        topRight.setPower(-leftY1);
-        bottomRight.setPower(-leftY1);
-        bottomLeft.setPower(leftY1);
-        topLeft.setPower(leftY1);
-    }
-
-    public void bwd() {
-        topRight.setPower(leftY1);
-        bottomRight.setPower(leftY1);
-        bottomLeft.setPower(-leftY1);
-        topLeft.setPower(-leftY1);
-    }
-
-    public void right() {
-        topRight.setPower(-leftX1);
-        bottomRight.setPower(leftX1);
-        bottomLeft.setPower(leftX1);
-        topLeft.setPower(-leftX1);
-    }
-
-    public void left() {
-        topRight.setPower(leftX1);
-        bottomRight.setPower(-leftX1);
-        bottomLeft.setPower(-leftX1);
-        topLeft.setPower(leftX1);
-    }
-
-    public void turnRight() {
-        topRight.setPower(-rightX1);
-        bottomRight.setPower(-rightX1);
-        bottomLeft.setPower(-rightX1);
-        topLeft.setPower(-rightX1);
-    }
-
-    public void turnLeft() {
-        topRight.setPower(rightX1);
-        bottomRight.setPower(rightX1);
-        bottomLeft.setPower(rightX1);
-        topLeft.setPower(rightX1);
-    }
-
-    public void still() {
-        topRight.setPower(0);
-        bottomRight.setPower(0);
-        bottomLeft.setPower(0);
-        topLeft.setPower(0);
-    }
-
-    public double powerCurve(double power) {
-        return powerScale*Math.pow(power,2);
-    }
-
-
-
-
 }
