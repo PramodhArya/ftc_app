@@ -31,11 +31,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 /**
@@ -61,11 +64,21 @@ public class TeleOP extends OpMode
     private DcMotor bottomRight = null;
     private DcMotor bottomLeft = null;
     private DcMotor topLeft = null;
-    private DcMotor intake = null;
+    private DcMotor lifter = null;
+    private DcMotor flipper = null;
+
+    private Servo winch = null;
+    private Servo tilt = null;
+    private CRServo intake = null;
     
     private double leftY1;
     private double leftX1;
     private double rightX1;
+    private int counter = 0;
+    private int targetCount = 70;
+    private double winchIncrement = 0.05;
+    private double up = 45.0/180.0;
+    private double down = 0.0/180.0;
 
 
     @Override
@@ -75,7 +88,15 @@ public class TeleOP extends OpMode
         bottomRight = hardwareMap.get(DcMotor.class, "bottomRight");
         bottomLeft = hardwareMap.get(DcMotor.class, "bottomLeft");
         topLeft = hardwareMap.get(DcMotor.class, "topLeft");
-//        intake = hardwareMap.get(DcMotor.class, "intake");
+        lifter = hardwareMap.get(DcMotor.class, "lifter");
+        flipper = hardwareMap.get(DcMotor.class, "flipper");
+
+        winch = hardwareMap.get(Servo.class, "winch");
+        tilt = hardwareMap.get(Servo.class, "tilt");
+        intake = hardwareMap.get(CRServo.class, "intake");
+
+        flipper.setZeroPowerBehavior(BRAKE);
+
     }
 
     @Override
@@ -101,13 +122,37 @@ public class TeleOP extends OpMode
         topLeft.setPower(leftY1 - leftX1 - rightX1);
 
 //        //Intake
-//        if (gamepad1.right_trigger != 0) {
-//            intake.setPower(gamepad1.right_trigger);
-//        } else if (gamepad1.left_trigger != 0) {
-//            intake.setPower(gamepad1.left_trigger );
-//        } else {
-//            intake.setPower(0);
-//        }
+        if (gamepad1.right_trigger != 0) {
+            flipper.setPower(gamepad1.right_trigger);
+        } else if (gamepad1.left_trigger != 0) {
+            flipper.setPower(-gamepad1.left_trigger );
+        } else {
+            flipper.setPower(0);
+        }
+
+        if (gamepad1.a) {
+            intake.setPower(1);
+        } else if (gamepad1.b) {
+            intake.setPower(-1);
+        } else {
+            intake.setPower(0);
+        }
+        if (gamepad1.x) {
+            tilt.setPosition(up);
+        } else if (gamepad1.y) {
+            tilt.setPosition(down);
+        }
+
+        if (counter < targetCount) counter++;
+        if (gamepad1.right_bumper && counter == targetCount) {
+            winch.setPosition(winch.getPosition() + winchIncrement);
+            counter = 0;
+        } else if (gamepad1.left_bumper && counter == targetCount) {
+            winch.setPosition(winch.getPosition() - winchIncrement);
+            counter = 0;
+        } else {
+            winch.setPosition(winch.getPosition());
+        }
     }
 
     @Override

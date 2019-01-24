@@ -31,11 +31,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 /**
@@ -52,18 +55,31 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: Iterative OpMode", group="Iterative Opmode")
-@Disabled
+@TeleOp(name="test", group="Iterative Opmode")
 public class Test extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor intake = null;
+    private Servo pully = null;
+    private CRServo i = null;
+    private Servo tilt = null;
+
+    private boolean a = false;
+    private int counter = 0;
+    private int targetCount = 70;
+    private double pullyIncrement = 0.05;
+    private double up = 45.0/180.0;
+    private double down = 0.0/180.0;
 
     @Override
     public void init() {
         //Hardware Maps
         intake = hardwareMap.get(DcMotor.class, "intake");
+        pully = hardwareMap.get(Servo.class, "pully");
+        i = hardwareMap.get(CRServo.class, "i");
+        tilt = hardwareMap.get(Servo.class, "tilt");
+        intake.setZeroPowerBehavior(BRAKE);
     }
 
     @Override
@@ -81,10 +97,36 @@ public class Test extends OpMode
         if (gamepad1.right_trigger != 0) {
             intake.setPower(gamepad1.right_trigger);
         } else if (gamepad1.left_trigger != 0) {
-            intake.setPower(gamepad1.left_trigger );
+            intake.setPower(-gamepad1.left_trigger );
         } else {
             intake.setPower(0);
         }
+
+        if (gamepad1.a) {
+            i.setPower(1);
+        } else if (gamepad1.b) {
+            i.setPower(-1);
+        } else {
+            i.setPower(0);
+        }
+        if (gamepad1.x) {
+            tilt.setPosition(up);
+        } else if (gamepad1.y) {
+            tilt.setPosition(down);
+        }
+
+        if (counter < targetCount) counter++;
+        if (gamepad1.right_bumper && counter == targetCount) {
+            pully.setPosition(pully.getPosition() + pullyIncrement);
+            counter = 0;
+        } else if (gamepad1.left_bumper && counter == targetCount) {
+            pully.setPosition(pully.getPosition() - pullyIncrement);
+            counter = 0;
+        } else {
+            pully.setPosition(pully.getPosition());
+        }
+        telemetry.addData("Servo Position", pully.getPosition());
+        telemetry.update();
     }
 
     @Override
