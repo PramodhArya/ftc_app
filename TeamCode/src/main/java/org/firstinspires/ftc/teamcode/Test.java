@@ -72,6 +72,18 @@ public class Test extends OpMode
     private double up = 45.0/180.0;
     private double down = 0.0/180.0;
 
+    private final int gearReduction = 27;
+    private final double innerDiameter = 1.456;
+    private final double axelHight = 15.375;
+    private final double countsPerRevolution = 1120;
+
+    public void polarExtension(double radius, double theta) {
+
+//        pully.setPosition(radius/(innerDiameter*Math.PI*8);
+        intake.setTargetPosition((int)(theta * 1120 / (360)));
+
+    }
+
     @Override
     public void init() {
         //Hardware Maps
@@ -80,10 +92,6 @@ public class Test extends OpMode
         i = hardwareMap.get(CRServo.class, "i");
         tilt = hardwareMap.get(Servo.class, "tilt");
         intake.setZeroPowerBehavior(BRAKE);
-    }
-
-    @Override
-    public void init_loop() {
     }
 
     @Override
@@ -113,6 +121,12 @@ public class Test extends OpMode
             tilt.setPosition(up);
         } else if (gamepad1.y) {
             tilt.setPosition(down);
+        }
+
+        if(gamepad1.dpad_down) {
+            intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } else if(gamepad1.dpad_up) {
+            intake.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         if (counter < targetCount) counter++;

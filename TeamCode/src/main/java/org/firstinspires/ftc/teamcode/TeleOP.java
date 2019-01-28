@@ -28,18 +28,14 @@
  */
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
-import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -60,10 +56,10 @@ public class TeleOP extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor topRight = null;
-    private DcMotor bottomRight = null;
-    private DcMotor bottomLeft = null;
-    private DcMotor topLeft = null;
+    private DcMotor front = null;
+    private DcMotor right = null;
+    private DcMotor bottom = null;
+    private DcMotor left = null;
     private DcMotor lifter = null;
     private DcMotor flipper = null;
 
@@ -80,14 +76,14 @@ public class TeleOP extends OpMode
     private double up = 45.0/180.0;
     private double down = 0.0/180.0;
 
-
+    //moira dps
     @Override
     public void init() {
         //Hardware Maps
-        topRight = hardwareMap.get(DcMotor.class, "topRight");
-        bottomRight = hardwareMap.get(DcMotor.class, "bottomRight");
-        bottomLeft = hardwareMap.get(DcMotor.class, "bottomLeft");
-        topLeft = hardwareMap.get(DcMotor.class, "topLeft");
+        front = hardwareMap.get(DcMotor.class, "front");
+        right = hardwareMap.get(DcMotor.class, "right");
+        bottom = hardwareMap.get(DcMotor.class, "bottom");
+        left = hardwareMap.get(DcMotor.class, "left");
         lifter = hardwareMap.get(DcMotor.class, "lifter");
         flipper = hardwareMap.get(DcMotor.class, "flipper");
 
@@ -98,7 +94,6 @@ public class TeleOP extends OpMode
         flipper.setZeroPowerBehavior(BRAKE);
 
     }
-
     @Override
     public void init_loop() {
     }
@@ -116,38 +111,50 @@ public class TeleOP extends OpMode
         rightX1 = gamepad1.right_stick_x;
 
         //Movement
-        topRight.setPower(-leftY1 - leftX1 - rightX1);
-        bottomRight.setPower(-leftY1 + leftX1 - rightX1);
-        bottomLeft.setPower(leftY1 + leftX1 - rightX1);
-        topLeft.setPower(leftY1 - leftX1 - rightX1);
+        front.setPower(-leftX1 - rightX1);
+        right.setPower(-leftY1 - rightX1);
+        bottom.setPower(leftX1 - rightX1);
+        left.setPower(leftY1 - rightX1);
 
-//        //Intake
-        if (gamepad1.right_trigger != 0) {
-            flipper.setPower(gamepad1.right_trigger);
-        } else if (gamepad1.left_trigger != 0) {
-            flipper.setPower(-gamepad1.left_trigger );
+        //Flipper
+        if (gamepad2.right_trigger != 0) {
+            flipper.setPower(Math.pow(gamepad2.right_trigger,2)/2);
+        } else if (gamepad2.left_trigger != 0) {
+            flipper.setPower(-Math.pow(gamepad2.right_trigger,2)/2);
         } else {
             flipper.setPower(0);
         }
 
-        if (gamepad1.a) {
-            intake.setPower(1);
-        } else if (gamepad1.b) {
-            intake.setPower(-1);
+        //Intake
+        if (gamepad1.right_trigger != 0) {
+            intake.setPower(gamepad1.right_trigger);
+        } else if (gamepad1.left_trigger != 0) {
+            intake.setPower(-gamepad1.left_trigger);
         } else {
             intake.setPower(0);
         }
-        if (gamepad1.x) {
+        //Box Tilt
+        if (gamepad1.a) {
             tilt.setPosition(up);
-        } else if (gamepad1.y) {
+        } else if (gamepad1.b) {
             tilt.setPosition(down);
         }
 
+        //Linear Actuator
+        if (gamepad2.dpad_up) {
+            lifter.setPower(1);
+        } else if (gamepad2.dpad_down) {
+            lifter.setPower(-1);
+        } else {
+            lifter.setPower(0);
+        }
+
+        //Winch
         if (counter < targetCount) counter++;
-        if (gamepad1.right_bumper && counter == targetCount) {
+        if (gamepad2.right_bumper && counter == targetCount) {
             winch.setPosition(winch.getPosition() + winchIncrement);
             counter = 0;
-        } else if (gamepad1.left_bumper && counter == targetCount) {
+        } else if (gamepad2.left_bumper && counter == targetCount) {
             winch.setPosition(winch.getPosition() - winchIncrement);
             counter = 0;
         } else {
