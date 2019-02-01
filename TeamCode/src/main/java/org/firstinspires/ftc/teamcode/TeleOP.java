@@ -37,23 +37,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
-/**
- * This file contains an example of an iterative (Non-Linear) "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When an selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all iterative OpModes contain.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-
 @TeleOp(name="TeleOP", group="Iterative Opmode")
 public class TeleOP extends OpMode
 {
+
+    double COUNTS_PER_REVOLUTION = 1120;
+    double GEAR_REDUCTION = 3;
+    double PULLEY_DIAMETER = 1.456;
+    double HEIGHT_OF_AXIS = 14;
+    double angleIncrement = Math.PI/36;
+
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor front = null;
@@ -70,11 +63,27 @@ public class TeleOP extends OpMode
     private double leftY1;
     private double leftX1;
     private double rightX1;
+    private double leftTrigger2;
+    private double rightTrigger2;
     private int counter = 0;
     private int targetCount = 70;
-    private double winchIncrement = 0.05;
-    private double up = 45.0/180.0;
+
+    private double winchIncrement = .05;
+    private double maxWinch = 0.65;
+
+    private double up = 135.0/180.0;
     private double down = 0.0/180.0;
+    private double up1 = 155.0/180.0;
+    private double middle = 80.0/180.0;
+
+//    double COUNTS_PER_REVOLUTION = 1120; //for 40, 1680 for 60
+//    double GEAR_REDUCTION = 27;
+//    double PULLEY_DIAMETER = 1.456;
+//    double HEIGHT_OF_AXIS = 1;//TODO: UNKNOWN
+
+    boolean pressed = false;
+
+
 
     //moira dps
     @Override
@@ -91,7 +100,9 @@ public class TeleOP extends OpMode
         tilt = hardwareMap.get(Servo.class, "tilt");
         intake = hardwareMap.get(CRServo.class, "intake");
 
-        flipper.setZeroPowerBehavior(BRAKE);
+        flipper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+//        flipper.setZeroPowerBehavior(BRAKE);
 
     }
     @Override
@@ -100,15 +111,22 @@ public class TeleOP extends OpMode
 
     @Override
     public void start() {
+        flipper.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flipper.setPower(.3);
         runtime.reset();
+        winch.setPosition(0);
     }
 
     @Override
     public void loop() {
 
-        leftY1 = gamepad1.left_stick_y;
-        leftX1 = gamepad1.left_stick_x;
-        rightX1 = gamepad1.right_stick_x;
+
+        leftY1 = powerScale(gamepad1.left_stick_y,.7);
+        leftX1 = powerScale(gamepad1.left_stick_x,.7);
+        rightX1 = powerScale(gamepad1.right_stick_x,.7);
+
+        leftTrigger2 = powerScale(gamepad2.left_trigger, .5);
+        rightTrigger2 = powerScale(gamepad2.right_trigger,.7);
 
         //Movement
         front.setPower(-leftX1 - rightX1);
@@ -118,18 +136,16 @@ public class TeleOP extends OpMode
 
         //Flipper
         if (gamepad2.right_trigger != 0) {
-            flipper.setPower(Math.pow(gamepad2.right_trigger,2)/2);
+            flipper.setTargetPosition(flipper.getCurrentPosition() + RadiansToCounts(angleIncrement));
         } else if (gamepad2.left_trigger != 0) {
-            flipper.setPower(-Math.pow(gamepad2.right_trigger,2)/2);
-        } else {
-            flipper.setPower(0);
+            flipper.setTargetPosition(flipper.getCurrentPosition() - RadiansToCounts(angleIncrement));
         }
 
         //Intake
         if (gamepad1.right_trigger != 0) {
-            intake.setPower(gamepad1.right_trigger);
+            intake.setPower(-gamepad1.right_trigger);
         } else if (gamepad1.left_trigger != 0) {
-            intake.setPower(-gamepad1.left_trigger);
+            intake.setPower(gamepad1.left_trigger);
         } else {
             intake.setPower(0);
         }
@@ -138,6 +154,10 @@ public class TeleOP extends OpMode
             tilt.setPosition(up);
         } else if (gamepad1.b) {
             tilt.setPosition(down);
+        } else if (gamepad1.x) {
+            tilt.setPosition(up1);
+        } else if (gamepad1.y) {
+            tilt.setPosition(middle);
         }
 
         //Linear Actuator
@@ -150,7 +170,19 @@ public class TeleOP extends OpMode
         }
 
         //Winch
-        if (counter < targetCount) counter++;
+        if (!pressed) {
+            if (gamepad2.right_bumper && (winch.getPosition() + winchIncrement < maxWinch)) {
+                winch.setPosition(winch.getPosition() + winchIncrement);
+                pressed = true;
+            } else if (gamepad2.left_bumper) {
+                winch.setPosition(winch.getPosition() - winchIncrement);
+                pressed = true;
+            }
+        } else if (!gamepad2.right_bumper && !gamepad2.left_bumper) {
+            pressed = false;
+        }
+
+/*        if (counter < targetCount) counter++;
         if (gamepad2.right_bumper && counter == targetCount) {
             winch.setPosition(winch.getPosition() + winchIncrement);
             counter = 0;
@@ -159,10 +191,51 @@ public class TeleOP extends OpMode
             counter = 0;
         } else {
             winch.setPosition(winch.getPosition());
-        }
+        }*/
+
+        telemetry.addData("Winch Position: ", winch.getPosition());
+        telemetry.update();
+
     }
 
     @Override
     public void stop() {
+    }
+
+    public double powerScale(double power, double powerScaleFactor) {
+        if (power > 0) {
+            return Math.pow(power,2)*powerScaleFactor;
+        } else if (power < 0) {
+            return -Math.pow(power,2)*powerScaleFactor;
+        } else {
+            return 0;
+        }
+    }
+
+//    public void PolarExtension(double theta, double radius) {
+//
+//        winch.setPosition(radius / (Math.PI * PULLEY_DIAMETER));
+//        flipper.setTargetPosition();
+//    }
+
+//    public void FloorExtension(double x) {
+//
+//        double radius = Math.sqrt(x * x + HEIGHT_OF_AXIS * HEIGHT_OF_AXIS);
+//        double theta = Math.asin(x / radius);
+//
+//        PolarExtension(theta, radius);
+//
+//    }
+
+    public double CountsToRadians(int counts) {
+
+        return (counts * 2 * Math.PI) / (COUNTS_PER_REVOLUTION * GEAR_REDUCTION);
+
+    }
+
+    public int RadiansToCounts(double radians) {
+
+        return (int)((radians * COUNTS_PER_REVOLUTION * GEAR_REDUCTION) / (2 * Math.PI));
+
     }
 }
