@@ -1,16 +1,43 @@
+/* Copyright (c) 2017 FIRST. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted (subject to the limitations in the disclaimer below) provided that
+ * the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list
+ * of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * Neither the name of FIRST nor the names of its contributors may be used to endorse or
+ * promote products derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+ * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -18,8 +45,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -31,11 +56,16 @@ import java.util.TimerTask;
 
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
-@Autonomous(name="Autonomous Depot", group="Pushbot")
-public class Auto extends LinearOpMode {
+@Autonomous(name="Iterative Auto", group="Iterative Opmode")
+@Disabled
+public class BasicOpMode_Iterative extends OpMode
+{
 
     public Timer Diego;
     public TimerTask task;
+
+    boolean stopRequested;
+    boolean isStarted;
 
     /* Declare OpMode members. */
 //    ModernRoboticsI2cGyro   gyro    = null;                    // Additional Gyro device
@@ -50,23 +80,12 @@ public class Auto extends LinearOpMode {
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
     static final double     DRIVE_SPEED             = 0.5;     // Nominal speed for better accuracy.
-    static final double     TURN_SPEED              = 0.7;     // Nominal half speed for better accuracy.
-
-    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
-    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
-    static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
-
-    static final double SERVO_DOWN = 30/280.0;
-    static final double SERVO_UP = 180/280.0;
-
-    boolean gold = false;
 
     ElapsedTime timer = new ElapsedTime();
 
     BNO055IMU imu;
 
     Orientation angles;
-    Acceleration gravity;
 
     ElapsedTime runtime = new ElapsedTime();
 
@@ -82,7 +101,7 @@ public class Auto extends LinearOpMode {
     private CRServo intake = null;
 
     private enum goldMineral { LEFT, MIDDLE, RIGHT; }
-    goldMineral goldMineralPosition = goldMineral.MIDDLE;
+    goldMineral goldMineralPosition = goldMineral.RIGHT;
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
@@ -101,23 +120,11 @@ public class Auto extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY = "AaccPCv/////AAAAGUHMoe4QMEQnovLFMgFScJEVe3Zia3YYTEl3U1EXcd1XRE7aV9ONZFR91dfsSQ4tnOBYK10+SvF1S1LEGkjeQWDBFvKci3ki3K7E440/ZRB0YGIuxYUVrp9AZ0PtSExOtE6bFXyksrCPcD6IV8rHvNJYwWbE/LUqrCj18TtN0QbWBXfVSmXmRnfVWBDOA8O8v7kCZzeBm328KlYb105Uo48MICRipR9/oua0rJ1QNIY+ytwxHabLCZgNlMr64+In/xB3aCtnHjTC8ClSxirmschtzlq+up6CzYkahlX45SnV6mGqJ345uPzUnJzAr9Z6QDEd17veQPMP3zLheBDWM3l/590e+i5qFLvjVrcu/Njs\n";
-
-    /**
-     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
-     * localization engine.
-     */
     private VuforiaLocalizer vuforia;
-
-    /**
-     * {@link #tfod} is the variable we will use to store our instance of the Tensor Flow Object
-     * Detection engine.
-     */
     private TFObjectDetector tfod;
 
     @Override
-    public void runOpMode() {
-
-        //*************************** IMU Setup ************************/
+    public void init() {
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -142,9 +149,6 @@ public class Auto extends LinearOpMode {
         lifter = hardwareMap.get(DcMotor.class, "lifter");
         flipper = hardwareMap.get(DcMotor.class, "flipper");
 
-//        front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        bottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         winch = hardwareMap.get(Servo.class, "winch");
         tilt = hardwareMap.get(Servo.class, "tilt");
         intake = hardwareMap.get(CRServo.class, "intake");
@@ -152,95 +156,45 @@ public class Auto extends LinearOpMode {
         front.setDirection(REVERSE);
         right.setDirection(REVERSE);
 
+        stopRequested = false;
+        isStarted = false;
+
         lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         initVuforia();
 
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        /** Activate Tensor Flow Object Detection. */
-        if (tfod != null) {
-            tfod.activate();
-        }
-
-        while (!isStarted()) {
-            synchronized (this) {
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-            colorCheck();
-        }
-
-        waitForStart();
-        tfod.shutdown();
         startUpdates();
+    }
 
-//        stopUpdates();
+    @Override
+    public void init_loop() {
+//        colorCheck();
+    }
 
-//        runtime.reset();
-
-        unhook(13000); //1500
-        moveY(DRIVE_SPEED, inchesToCounts(7), 5);
-        moveX(DRIVE_SPEED, inchesToCounts(14), 5);
-        sampleMineral();
-        tilt.setPosition(SERVO_DOWN);
-
-//        moveY(DRIVE_SPEED, -inchesToCounts(10), 5);
-//        turnRelative(90);
-//        long start = timer.now(TimeUnit.SECONDS);
-//        while (timer.now(TimeUnit.SECONDS) - 2 < start && opModeIsActive()) {
-//
-//        }
-//        turnRelative(90);
-//        float start = timer.now(TimeUnit.SECONDS);
-//        while (timer.now(TimeUnit.SECONDS) - 2 < start && opModeIsActive()) {
-//
-//        }
-//        turnRelative(-90);
-//        start = timer.now(TimeUnit.SECONDS);
-//        while (timer.now(TimeUnit.SECONDS) - 2 < start && opModeIsActive()) {
-//
-//        }
-//        turnRelative(90);
-//        start = timer.now(TimeUnit.SECONDS);
-//        while (timer.now(TimeUnit.SECONDS) - 2 < start && opModeIsActive()) {
-//
-//        }
+    @Override
+    public void start() {
+        isStarted = true;
+//        tfod.shutdown();
+        turnDiego(90);
+        long start = timer.now(TimeUnit.SECONDS);
+        timer.reset();
+        while (timer.now(TimeUnit.SECONDS) < (start + 5) && opModeIsActive()) {
+            telemetry.addData("Time",timer.now(TimeUnit.SECONDS));
+            telemetry.update();
+        }
 //        turnDiego(90);
-//        moveY(DRIVE_SPEED, inchesToCounts(10), 5);
-//        turnDiego(90);
-//        moveY(DRIVE_SPEED, inchesToCounts(10), 5);
-//        turnDiego(180);
-//        moveY(DRIVE_SPEED, inchesToCounts(10), 5);
-//        turnDiego(270);
-//        moveY(DRIVE_SPEED, inchesToCounts(10), 5);
-//        gyroTurn(DRIVE_SPEED, -20);
-//        pause();
-//        moveY(DRIVE_SPEED,1000);
-//        pause();
-//        gyroTurn(TURN_SPEED, -4);
-//        pause();
-//        while (opModeIsActive()) {
-////            telemetry.addData("front position", front.getCurrentPosition());
-////            telemetry.addData("bottom position", bottom.getCurrentPosition());
-////            telemetry.addData("front target", front.getTargetPosition());
-////            telemetry.addData("bottom target", bottom.getTargetPosition());
-//            telemetry.addLine("finished");
-//            telemetry.update();
-//        }
+    }
 
+    @Override
+    public void loop() {
+
+    }
+
+    @Override
+    public void stop() {
+        stopRequested = true;
         stopUpdates();
-        telemetry.addLine("finished");
-        telemetry.update();
     }
 
     public void moveX(double power, int distance, long timeout) {
@@ -251,7 +205,7 @@ public class Auto extends LinearOpMode {
         front.setTargetPosition(front.getCurrentPosition() + distance);
         bottom.setPower(power);
         front.setPower(power);
-        while (opModeIsActive() && front.isBusy() && bottom.isBusy() && runtime.now(TimeUnit.SECONDS) - timeout <= start) {
+        while (front.isBusy() && bottom.isBusy() && runtime.now(TimeUnit.SECONDS) - timeout <= start) {
             telemetry.addData("front position", front.getCurrentPosition());
             telemetry.addData("bottom position", bottom.getCurrentPosition());
             telemetry.addData("front target", front.getTargetPosition());
@@ -269,7 +223,7 @@ public class Auto extends LinearOpMode {
         left.setTargetPosition(left.getCurrentPosition() + distance);
         right.setPower(power);
         left.setPower(power);
-        while (opModeIsActive() && right.isBusy() && left.isBusy() && runtime.now(TimeUnit.SECONDS) - timeout <= start) {
+        while (right.isBusy() && left.isBusy() && runtime.now(TimeUnit.SECONDS) - timeout <= start) {
             telemetry.addData("right position", right.getCurrentPosition());
             telemetry.addData("left position", left.getCurrentPosition());
             telemetry.addData("right target", right.getTargetPosition());
@@ -281,7 +235,7 @@ public class Auto extends LinearOpMode {
 
     public void outtake(double time) {
         timer.reset();
-        while(opModeIsActive() && (timer.time() < time)) {
+        while((timer.time() < time)) {
             intake.setPower(1);
         }
         intake.setPower(0);
@@ -292,56 +246,56 @@ public class Auto extends LinearOpMode {
     }
 
     public void colorCheck() {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        if (updatedRecognitions.size() == 2) {
-                            boolean middleisGold = updatedRecognitions.get(0).getLabel().equals(LABEL_GOLD_MINERAL);
-                            boolean rightisGold = updatedRecognitions.get(1).getLabel().equals(LABEL_GOLD_MINERAL);
-                            if (middleisGold) {
-                                telemetry.addData("Gold Mineral Position", "Middle");
-                                goldMineralPosition = goldMineral.MIDDLE;
-                            } else if (rightisGold) {
-                                telemetry.addData("Gold Mineral Position", "Right");
-                                goldMineralPosition = goldMineral.RIGHT;
-                            } else {
-                                telemetry.addData("Gold Mineral Position", "Left");
-                                goldMineralPosition = goldMineral.LEFT;
-                            }
+        /** Activate Tensor Flow Object Detection. */
+        if (tfod != null) {
+            tfod.activate();
+        }
+
+//        while (true) {
+            if (tfod != null) {
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+                    if (updatedRecognitions.size() == 2) {
+                        boolean middleisGold = updatedRecognitions.get(0).getLabel().equals(LABEL_GOLD_MINERAL);
+                        boolean rightisGold = updatedRecognitions.get(1).getLabel().equals(LABEL_GOLD_MINERAL);
+                        if (middleisGold) {
+                            telemetry.addData("Gold Mineral Position", "Middle");
+                            goldMineralPosition = goldMineral.MIDDLE;
+                        } else if (rightisGold) {
+                            telemetry.addData("Gold Mineral Position", "Right");
+                            goldMineralPosition = goldMineral.RIGHT;
+                        } else {
+                            telemetry.addData("Gold Mineral Position", "Left");
+                            goldMineralPosition = goldMineral.LEFT;
                         }
-                        telemetry.update();
                     }
+                    telemetry.update();
                 }
+            }
+//        }
+//
+//        if (tfod != null) {
+//            tfod.shutdown();
+//        }
     }
 
     public void sampleMineral() {
         switch (goldMineralPosition)
         {
             case LEFT:
-                moveY(DRIVE_SPEED,inchesToCounts(-27),10);
-                moveX(DRIVE_SPEED, inchesToCounts(50),10);
-                turnRelative(120);
+                moveY(DRIVE_SPEED,inchesToCounts(-24),10);
                 telemetry.addData("Gold mineral is on the","left");
                 break;
             case MIDDLE:
-                moveY(DRIVE_SPEED,inchesToCounts(-14), 5);
-                moveX(DRIVE_SPEED,inchesToCounts(56),10);
-                turnRelative(155);
+                moveY(DRIVE_SPEED,inchesToCounts(-7), 5);
+                moveX(DRIVE_SPEED,inchesToCounts(50),10);
                 telemetry.addData("Gold mineral is on the","middle");
                 break;
             case RIGHT:
-                moveY(DRIVE_SPEED,inchesToCounts(7),5);
-                moveX(DRIVE_SPEED,inchesToCounts(24),5);
-                turnRelative(150);
-                moveY(DRIVE_SPEED, -inchesToCounts(22), 7);
-//                long start = timer.now(TimeUnit.SECONDS);
-//                while (timer.now(TimeUnit.SECONDS) - 10 < start && opModeIsActive()) {
-//
-//                }
-
+                moveY(DRIVE_SPEED,inchesToCounts(10),5);
                 telemetry.addData("Gold mineral is on the","right");
                 break;
         }
@@ -350,7 +304,7 @@ public class Auto extends LinearOpMode {
     public void unhook(int value) {
         lifter.setTargetPosition(value);
         lifter.setPower(1);
-        while (opModeIsActive() && lifter.isBusy()) {
+        while (lifter.isBusy()) {
             telemetry.addData("Lifter", lifter.getCurrentPosition());
             telemetry.addData("lifter target", lifter.getTargetPosition());
             telemetry.update();
@@ -377,7 +331,7 @@ public class Auto extends LinearOpMode {
 
 //        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-        while (angles == null && opModeIsActive()) {
+        while (angles == null) {
 
         }
 
@@ -395,7 +349,7 @@ public class Auto extends LinearOpMode {
 
         float multiplier = angle / Math.abs(angle);
 
-        while (!(angles.firstAngle < left && angles.firstAngle > right) && opModeIsActive()) {
+        while (!(angles.firstAngle < left && angles.firstAngle > right)) {
             front.setPower(0.35f * multiplier * direction);
             bottom.setPower(-0.35f * multiplier * direction);
             telemetry.addData("first Angle", angles.firstAngle);
@@ -453,16 +407,11 @@ public class Auto extends LinearOpMode {
         bottom.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         left.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        bottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-        float margin = 3;
+        float margin = 10;
         float speed = 0.7f;
 
-        while (angles == null && opModeIsActive()) {}
+        while (angles == null) {}
 
         float startingAngle = angles.firstAngle;
 
@@ -486,16 +435,16 @@ public class Auto extends LinearOpMode {
 
         int direction = 1;
 
-        if (Math.abs(angle - startingAngle) > 360 - Math.abs(angle - startingAngle)) {
+        if (Math.abs(angle - startingAngle) > 180) {
             direction = -1;
         }
 
-        while (!(rangeOne.contains(angles.firstAngle + 180) || rangeTwo.contains(angles.firstAngle + 180)) && opModeIsActive()) {
+        while (!(rangeOne.contains(angles.firstAngle + 180) || rangeTwo.contains(angles.firstAngle + 180))) {
 
-            front.setPower(-speed * direction);
-            right.setPower(-speed * direction);
-            bottom.setPower(speed * direction);
-            left.setPower(speed * direction);
+            front.setPower(speed * direction);
+            right.setPower(speed * direction);
+            bottom.setPower(-speed * direction);
+            left.setPower(-speed * direction);
             telemetry.addData("first Angle", angles.firstAngle + 180);
             telemetry.addData("left angle", leftMargin);
             telemetry.addData("right angle", rightMargin);
@@ -512,41 +461,50 @@ public class Auto extends LinearOpMode {
 
     }
 
-    public void turnRelative(float angle) {
-
-        while (angles == null && opModeIsActive()) {}
-
-        turnDiego((angles.firstAngle + angle + 360)%360);
-
-    }
-
-    /**
-     * Initialize the Vuforia localization engine.
-     */
     private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
 
-        //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+        }
+
     }
 
-    /**
-     * Initialize the Tensor Flow Object Detection engine.
-     */
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+
+    public final boolean opModeIsActive() {
+        boolean isActive = !this.isStopRequested() && this.isStarted();
+        if (isActive) {
+            idle();
+        }
+        return isActive;
+    }
+
+    public final boolean isStopRequested() {
+        return this.stopRequested || Thread.currentThread().isInterrupted();
+    }
+
+    public final void idle() {
+        // Otherwise, yield back our thread scheduling quantum and give other threads at
+        // our priority level a chance to run
+        Thread.yield();
+    }
+
+    public final boolean isStarted() {
+        return this.isStarted || Thread.currentThread().isInterrupted();
     }
 
 }

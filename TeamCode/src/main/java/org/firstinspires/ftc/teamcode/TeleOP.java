@@ -83,9 +83,6 @@ public class TeleOP extends OpMode
 
     boolean pressed = false;
 
-
-
-    //moira dps
     @Override
     public void init() {
         //Hardware Maps
@@ -100,7 +97,7 @@ public class TeleOP extends OpMode
         tilt = hardwareMap.get(Servo.class, "tilt");
         intake = hardwareMap.get(CRServo.class, "intake");
 
-        flipper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        flipper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 //        flipper.setZeroPowerBehavior(BRAKE);
 
@@ -111,8 +108,8 @@ public class TeleOP extends OpMode
 
     @Override
     public void start() {
-        flipper.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        flipper.setPower(.3);
+//        flipper.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        flipper.setPower(.3);
         runtime.reset();
         winch.setPosition(0);
     }
@@ -136,10 +133,17 @@ public class TeleOP extends OpMode
 
         //Flipper
         if (gamepad2.right_trigger != 0) {
-            flipper.setTargetPosition(flipper.getCurrentPosition() + RadiansToCounts(angleIncrement));
+            flipper.setPower(-rightTrigger2);
         } else if (gamepad2.left_trigger != 0) {
-            flipper.setTargetPosition(flipper.getCurrentPosition() - RadiansToCounts(angleIncrement));
+            flipper.setPower(leftTrigger2);
+        } else {
+            flipper.setPower(0);
         }
+//        if (gamepad2.right_trigger != 0) {
+//            flipper.setTargetPosition(flipper.getCurrentPosition() + RadiansToCounts(angleIncrement));
+//        } else if (gamepad2.left_trigger != 0) {
+//            flipper.setTargetPosition(flipper.getCurrentPosition() - RadiansToCounts(angleIncrement));
+//        }
 
         //Intake
         if (gamepad1.right_trigger != 0) {

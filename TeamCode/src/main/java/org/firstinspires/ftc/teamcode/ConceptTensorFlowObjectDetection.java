@@ -52,6 +52,7 @@ import java.util.List;
  * is explained below.
  */
 @TeleOp(name = "Concept: TensorFlow Object Detection", group = "Concept")
+@Disabled
 public class
 ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -114,28 +115,32 @@ ConceptTensorFlowObjectDetection extends LinearOpMode {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
                       telemetry.addData("# Object Detected", updatedRecognitions.size());
-                      if (updatedRecognitions.size() == 3) {
+                      if (updatedRecognitions.size() == 2) {
+                          telemetry.addData("made it in","1");
                         int goldMineralX = -1;
                         int silverMineral1X = -1;
-                        int silverMineral2X = -1;
-                        for (Recognition recognition : updatedRecognitions) {
-                          if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            goldMineralX = (int) recognition.getLeft();
-                          } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getLeft();
-                          } else {
-                            silverMineral2X = (int) recognition.getLeft();
-                          }
-                        }
-                        if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                          if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                            telemetry.addData("Gold Mineral Position", "Left");
-                          } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                        int silverMineral2X = - 1;
+                        boolean leftisGold = updatedRecognitions.get(0).getLabel().equals(LABEL_GOLD_MINERAL);
+                        boolean rightisGold = updatedRecognitions.get(1).getLabel().equals(LABEL_GOLD_MINERAL);
+
+//                        for (Recognition recognition : updatedRecognitions) {
+//                            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+//                            goldMineralX = (int) recognition.getLeft();
+//                          } else if (silverMineral1X == -1) {
+//                            silverMineral1X = (int) recognition.getLeft();
+//                          } else {
+//                            silverMineral2X = (int) recognition.getLeft();
+//                          }
+//                        }
+//                          telemetry.addData("made it in 2.5",goldMineralX);
+//                          telemetry.addData("made it in 2.5.5",silverMineral1X);
+                          if (leftisGold) {
                             telemetry.addData("Gold Mineral Position", "Right");
-                          } else {
+                          } else if (rightisGold) {
                             telemetry.addData("Gold Mineral Position", "Center");
+                          } else {
+                            telemetry.addData("Gold Mineral Position", "Left");
                           }
-                        }
                       }
                       telemetry.update();
                     }
