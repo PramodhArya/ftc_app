@@ -6,11 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -18,21 +15,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
-@Autonomous(name="Autonomous Depot", group="Pushbot")
-public class Auto extends LinearOpMode {
+@Autonomous(name="Autonomous Crater", group="Pushbot")
+public class Auto1 extends LinearOpMode {
 
     public Timer Diego;
     public TimerTask task;
@@ -167,7 +162,6 @@ public class Auto extends LinearOpMode {
         if (tfod != null) {
             tfod.activate();
         }
-
 
         waitForStart();
         tfod.shutdown();
@@ -320,20 +314,20 @@ public class Auto extends LinearOpMode {
             case LEFT:
                 moveY(DRIVE_SPEED,inchesToCounts(-27),10);
                 moveX(DRIVE_SPEED, inchesToCounts(56),10);
-                turnRelative(100);
+//                turnRelative(100);
                 telemetry.addData("Gold mineral is on the","left");
                 break;
             case MIDDLE:
                 moveY(DRIVE_SPEED,inchesToCounts(-14), 5);
                 moveX(DRIVE_SPEED,inchesToCounts(56),10);
-                turnRelative(155);
+//                turnRelative(155);
                 telemetry.addData("Gold mineral is on the","middle");
                 break;
             case RIGHT:
                 moveY(DRIVE_SPEED,inchesToCounts(7),5);
                 moveX(DRIVE_SPEED,inchesToCounts(36),5);
-                turnRelative(145);
-                moveY(DRIVE_SPEED, -inchesToCounts(30), 7);
+//                turnRelative(145);
+//                moveY(DRIVE_SPEED, -inchesToCounts(30), 7);
 //                turnRelative(100);
 //                long start = timer.now(TimeUnit.SECONDS);
 //                while (timer.now(TimeUnit.SECONDS) - 10 < start && opModeIsActive()) {

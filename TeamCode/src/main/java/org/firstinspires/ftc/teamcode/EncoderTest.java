@@ -37,7 +37,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="EncoderTest", group="Iterative Opmode")
-@Disabled
 public class EncoderTest extends OpMode
 {
 
@@ -126,6 +125,22 @@ public class EncoderTest extends OpMode
 
     @Override
     public void loop() {
+
+        //Linear Actuator
+        if (gamepad2.dpad_up) {
+            lifter.setPower(1);
+        } else if (gamepad2.dpad_down) {
+            lifter.setPower(-1);
+        } else {
+            lifter.setPower(0);
+        }
+
+        //Linear Actuator
+        if (gamepad2.a) {
+            lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } else {
+            lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
 
         telemetry.addData("front position", front.getCurrentPosition());
         telemetry.addData("right position", right.getCurrentPosition());

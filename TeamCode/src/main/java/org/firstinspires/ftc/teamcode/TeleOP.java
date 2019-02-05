@@ -69,7 +69,8 @@ public class TeleOP extends OpMode
     private int targetCount = 70;
 
     private double winchIncrement = .05;
-    private double maxWinch = 0.65;
+    private double minWinch = 0.25;
+    private double maxWinch = 1.0;
 
     private double up = 135.0/180.0;
     private double down = 0.0/180.0;
@@ -111,7 +112,7 @@ public class TeleOP extends OpMode
 //        flipper.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 //        flipper.setPower(.3);
         runtime.reset();
-        winch.setPosition(0);
+        winch.setPosition(minWinch);
     }
 
     @Override
@@ -178,7 +179,7 @@ public class TeleOP extends OpMode
             if (gamepad2.right_bumper && (winch.getPosition() + winchIncrement < maxWinch)) {
                 winch.setPosition(winch.getPosition() + winchIncrement);
                 pressed = true;
-            } else if (gamepad2.left_bumper) {
+            } else if (gamepad2.left_bumper && (winch.getPosition() - winchIncrement > minWinch)) {
                 winch.setPosition(winch.getPosition() - winchIncrement);
                 pressed = true;
             }
